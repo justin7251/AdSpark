@@ -119,8 +119,3 @@ Authentication: Login functionality will be added in future updates.
 ## License
 
 Distributed under the MIT License. See `LICENSE` for more information.
-
-## Contact
-
-Your Name - [Your Email]
-Project Link: [https://github.com/your-username/adspark](https://github.com/your-username/adspark)
