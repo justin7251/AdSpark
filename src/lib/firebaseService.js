@@ -139,7 +139,7 @@ export const fetchUserTokenBalance = async (userId) => {
   try {
     const userRef = doc(db, 'users', userId);
     const userDoc = await getDoc(userRef);
-    
+
     if (userDoc.exists()) {
       const tokens = userDoc.data().tokens || 0;
       return tokens;
@@ -275,9 +275,8 @@ export const savePurchase = async (userId, purchaseDetails) => {
 
 export const getUserSearchHistory = async (userId, limitCount = 50) => {
   try {
-    const searchCollection = collection(db, 'user_searches');
     const q = query(
-      searchCollection, 
+      collection(db, "user_searches"), 
       where('userId', '==', userId),
       orderBy('timestamp', 'desc'),
       limit(limitCount)
@@ -315,14 +314,13 @@ export const getUserSearchHistory = async (userId, limitCount = 50) => {
 
 export const getUserPurchaseHistory = async (userId, limitCount = 50) => {
   try {
-    const purchaseCollection = collection(db, 'user_purchases');
-    const q = query(
-      purchaseCollection, 
-      where('userId', '==', userId),
-      orderBy('timestamp', 'desc'),
-      limit(limitCount)
-    );
-
+    // const q = query(
+    //   collection(db, 'user_purchases'), 
+    //   where('userId', '==', userId),
+    //   orderBy('timestamp', 'desc'),
+    //   limit(limitCount)
+    // );
+    const q = query(collection(db, "user_purchases"), where("userId", "==", userId));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({
       id: doc.id,
@@ -337,25 +335,18 @@ export const getUserPurchaseHistory = async (userId, limitCount = 50) => {
 
 export const getUserGeneratedHooks = async (userId, limitCount = 50) => {
   try {
-    const hooksCollection = collection(db, 'generated_hooks');
+    // const hooksCollection = collection(db, 'generated_hooks');
     const q = query(
-      hooksCollection, 
+      collection(db, 'generated_hooks'), 
       where('userId', '==', userId),
       orderBy('timestamp', 'desc'),
       limit(limitCount)
     );
-
+    // const q = query(collection(db, "generated_hooks"), where("userId", "==", userId));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => {
       const data = doc.data();
       
-      console.log('Raw Hook Data:', {
-        id: doc.id,
-        timestamp: data.timestamp,
-        timestampType: typeof data.timestamp,
-        timestampConstructor: data.timestamp?.constructor?.name
-      });
-
       // Comprehensive timestamp handling
       let timestamp;
       try {
