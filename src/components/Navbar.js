@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import useUserStore from '../stores/userStore';
+import Image from 'next/image';
 
 export default function Navbar() {
   const router = useRouter();
@@ -26,10 +27,12 @@ export default function Navbar() {
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex-shrink-0">
-              <img 
-                className="h-8 w-auto" 
-                src="/logo.png" 
+              <Image 
+                src="/assets/Adspark.svg"  
+                width={32}  
+                height={32}  
                 alt="AdSpark Logo" 
+                className="h-12 w-12"
               />
             </Link>
 
