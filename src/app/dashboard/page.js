@@ -16,17 +16,48 @@ import Navbar from '../../components/Navbar';
 import RenderHookHistory from "../../components/RenderHookHistory";
 import RenderSearchHistory from '../../components/RenderSearchHistory';
 import RenderPurchaseHistory from '../../components/RenderPurchaseHistory';
+import { useRouter } from 'next/navigation';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../../lib/firebaseConfig';
 
 export default function Dashboard() {
   const { signOutUser } = useAuth();
-  const { user } = useUserStore();
+  const router = useRouter();
+  const { user, setUser, initializeAuth } = useUserStore();
   const [searchHistory, setSearchHistory] = useState([]);
   const [purchaseHistory, setPurchaseHistory] = useState([]);
   const [generatedHooks, setGeneratedHooks] = useState([]);
   const [activeTab, setActiveTab] = useState('hooks');
-  const [isLoading, setIsLoading] = useState(true);
   const [tokenBalance, setTokenBalance] = useState(0);
   const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setIsLoading(true);
+      if (firebaseUser) {
+        // User is signed in
+        setUser({
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          displayName: firebaseUser.displayName,
+          photoURL: firebaseUser.photoURL
+        });
+        setIsLoading(false);
+      } else {
+        // No user is signed in, redirect to login
+        setUser(null);
+        router.push('/auth/login');
+      }
+    });
+
+    // Initialize other auth-related stuff
+    initializeAuth();
+
+    return () => {
+      unsubscribe(); // Cleanup subscription on unmount
+    };
+  }, []);
 
   useEffect(() => {
     const fetchHistoryData = async () => {
@@ -161,6 +192,18 @@ export default function Dashboard() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -198,12 +241,6 @@ export default function Dashboard() {
               </svg>
               Create Marketing Hook
             </Link>
-            <button
-              onClick={handleLogout}
-              className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition"
-            >
-              Logout
-            </button>
           </div>
         </div>
 

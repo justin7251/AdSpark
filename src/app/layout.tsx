@@ -1,6 +1,9 @@
-import type { Metadata } from "next";
+'use client';
+
+import { useEffect } from 'react';
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import useUserStore from '../stores/userStore';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -12,17 +15,18 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "AdSpark",
-  description: "AdSpark is a platform for creating and managing marketing hooks.",
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  
+  const { initializeAuth } = useUserStore();
+
+  useEffect(() => {
+    const unsubscribe = initializeAuth();
+    return () => unsubscribe();
+  }, []);
+
   return (
     <html lang="en">
       <body
