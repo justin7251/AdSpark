@@ -137,40 +137,23 @@ export const checkUsernameAvailability = async (username) => {
 // Fetch User Token Balance
 export const fetchUserTokenBalance = async (userId) => {
   try {
-    const userRef = doc(db, 'users', userId);
-    const userDoc = await getDoc(userRef);
-
+    const userDoc = await getDoc(doc(db, 'users', userId));
     if (userDoc.exists()) {
-      const tokens = userDoc.data().tokens || 0;
-      return tokens;
+      return userDoc.data().tokens || 0;
     }
     return 0;
   } catch (error) {
-    console.error('Error fetching token balance:', error);
+    console.error('Error fetching user tokens:', error);
     throw error;
   }
 };
 
 // Update User Tokens
-export const updateUserTokens = async (userId, tokenChange) => {
+export const updateUserTokens = async (userId, newTokens) => {
   try {
-    const userRef = doc(db, 'users', userId);
-    
-    // Fetch current tokens first
-    const userDoc = await getDoc(userRef);
-    if (!userDoc.exists()) {
-      throw new Error('User not found');
-    }
-    
-    const currentTokens = userDoc.data().tokens || 0;
-    const newTokenBalance = Math.max(0, currentTokens + tokenChange);
-    
-    await updateDoc(userRef, {
-      tokens: newTokenBalance,
-      lastTokenUpdate: serverTimestamp()
+    await updateDoc(doc(db, 'users', userId), {
+      tokens: newTokens
     });
-    
-    return newTokenBalance;
   } catch (error) {
     console.error('Error updating user tokens:', error);
     throw error;
