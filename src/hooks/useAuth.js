@@ -11,23 +11,20 @@ import {
   sendPasswordResetEmail,
   onAuthStateChanged
 } from 'firebase/auth';
-import { doc, setDoc, getFirestore } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebaseConfig';
 import useUserStore from '../stores/userStore';
 import { useRouter } from 'next/navigation';
 import { createUserProfile, updateUserLastLogin } from '../lib/firebaseService';
 
 export function useAuth() {
-  const [isLoading, setIsLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true);
   const [error, setError] = useState(null);
   const { setUser, clearUser, logout: logoutStore } = useUserStore();
   const router = useRouter();
 
   const createUserDocument = async (user) => {
     try {
-      console.log('Creating user document for:', user.uid);
-      console.log('Firestore DB:', db);
-
       const userRef = doc(db, 'users', user.uid);
       
       const userData = {
@@ -40,11 +37,7 @@ export function useAuth() {
         role: 'user'
       };
 
-      console.log('User data to be saved:', userData);
-
       await setDoc(userRef, userData, { merge: true });
-      
-      console.log('User document created successfully');
     } catch (error) {
       console.error('Error creating user document:', error);
       throw error;
@@ -55,12 +48,7 @@ export function useAuth() {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       try {
         if (currentUser) {
-          // Update last login timestamp
           await updateUserLastLogin(currentUser.uid);
-          
-          console.log('Auth state changed, user found:', currentUser.uid);
-          
-          // Create or update user document
           await createUserDocument(currentUser);
           
           const userData = {
@@ -72,13 +60,12 @@ export function useAuth() {
           
           setUser(userData);
         } else {
-          console.log('No user logged in');
           logoutStore();
         }
       } catch (error) {
         console.error('Auth state change error:', error);
       } finally {
-        setIsLoading(false);
+        setAuthLoading(false);
       }
     });
 
@@ -86,8 +73,8 @@ export function useAuth() {
   }, []);
 
   const signup = async (email, password, displayName) => {
-    setIsLoading(true);
-    setError(null);  // Reset previous errors
+    setAuthLoading(true);
+    setError(null);
 
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -99,7 +86,6 @@ export function useAuth() {
       router.push('/dashboard');
       return userCredential.user;
     } catch (err) {
-      // Detailed error handling
       let errorMessage = 'Signup failed. Please try again.';
 
       switch (err.code) {
@@ -116,31 +102,24 @@ export function useAuth() {
           errorMessage = err.message;
       }
 
-      console.error('Signup Error:', {
-        message: errorMessage,
-        code: err.code
-      });
-
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
-      setIsLoading(false);
+      setAuthLoading(false);
     }
   };
 
   const login = async (email, password) => {
-    setIsLoading(true);
-    setError(null);  // Reset previous errors
+    setAuthLoading(true);
+    setError(null);
 
     try {
-      // Validate input
       if (!email || !password) {
         throw new Error('Email and password are required');
       }
 
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       
-      // Additional user data setting
       setUser({
         uid: userCredential.user.uid,
         email: userCredential.user.email,
@@ -150,7 +129,6 @@ export function useAuth() {
       router.push('/dashboard');
       return userCredential.user;
     } catch (err) {
-      // Detailed error handling
       let errorMessage = 'Login failed. Please try again.';
 
       switch (err.code) {
@@ -170,20 +148,15 @@ export function useAuth() {
           errorMessage = err.message;
       }
 
-      console.error('Login Error:', {
-        message: errorMessage,
-        code: err.code
-      });
-
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
-      setIsLoading(false);
+      setAuthLoading(false);
     }
   };
 
   const signInWithGoogle = async () => {
-    setIsLoading(true);
+    setAuthLoading(true);
     setError(null);
     
     try {
@@ -211,29 +184,29 @@ export function useAuth() {
       setError(error.message);
       throw error;
     } finally {
-      setIsLoading(false);
+      setAuthLoading(false);
     }
   };
 
   const signOutUser = async () => {
-    setIsLoading(true);
+    setAuthLoading(true);
     setError(null);
     
     try {
       await signOut(auth);
       logoutStore();
-      router.push('/login');
+      router.push('/auth/login');
     } catch (error) {
       console.error('Sign Out Error:', error);
       setError(error.message);
     } finally {
-      setIsLoading(false);
+      setAuthLoading(false);
     }
   };
 
   // Password Reset Method
   const resetPassword = async (email) => {
-    setIsLoading(true);
+    setAuthLoading(true);
     setError(null);
 
     try {
@@ -256,7 +229,7 @@ export function useAuth() {
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
-      setIsLoading(false);
+      setAuthLoading(false);
     }
   };
 
@@ -266,8 +239,7 @@ export function useAuth() {
     signOutUser, 
     signInWithGoogle,
     resetPassword,
-    isLoading, 
+    isLoading: authLoading, 
     error,
-    setIsLoading 
   };
 }
